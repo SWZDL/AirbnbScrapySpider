@@ -1,0 +1,10 @@
+selenium
+pymysql
+pandas
+xlwt
+lxml
+requests
+beautifulsoup4
+scrapy
+pyyaml
+# redis
