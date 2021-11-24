@@ -1,3 +1,7 @@
+import json
+import random
+
+import requests
 import scrapy
 from selenium import webdriver
 
@@ -7,25 +11,42 @@ from AirbnbScrapySpider.items import AirbnbHomeListItem
 '''导入配置'''
 config = Config()
 '''配置 selenium'''
-chrome_opt = webdriver.ChromeOptions()  # 创建参数设置对象.
-# chrome_opt.add_argument('--headless')  # 无界面化.
-# chrome_opt.add_argument('--disable-gpu')  # 配合上面的无界面化.
-# chrome_opt.add_argument('--window-size=1900,1000')  # 设置窗口大小, 窗口大小会有影响.
-# chrome_opt.add_argument('–disable-infobars')
-# chrome_opt.add_argument('–incognito')
-# chrome_opt.add_argument('lang=zh_CN.UTF-8')
-chrome_opt.add_experimental_option('debuggerAddress', '127.0.0.1:9222')
+chrome_opt = webdriver.ChromeOptions()  # 创建参数设置对象
+# chrome_opt.add_argument('--headless')  # 无界面
+# chrome_opt.add_argument('--disable-gpu')  # 禁用 GPU
+chrome_opt.add_argument('--window-size=1900,1000')  # 设置窗口大小.
+chrome_opt.add_experimental_option("excludeSwitches", ["enable-automation"])  # 去除正在受到自动测试软件的提示
+chrome_opt.add_experimental_option('useAutomationExtension', False)  # 去除正在受到自动测试软件的提示
+# chrome_opt.add_argument('-–incognito') # 隐私模式
+chrome_opt.add_argument('lang=zh_CN.UTF-8')
+
+
+# chrome_opt.add_experimental_option('debuggerAddress', '127.0.0.1:9222')
 
 
 class HomesListSpider(scrapy.Spider):
     name = 'homesListSpiderGZ'
     allowed_domains = ['airbnb.cn']
-    start_urls = ['https://www.airbnb.cn/s/%E5%B9%BF%E5%B7%9E%E4%B8%9C%E7%AB%99/homes?refinement_paths%5B%5D=%2Fhomes&current_tab_id=home_tab&selected_tab_id=home_tab&pets=0&screen_size=large&hide_dates_and_guests_filters=false&place_id=ChIJpfPXL_D-AjQRuCzOwZURknI&map_toggle=false']
+    start_urls = ['https://www.airbnb.cn/s/%E4%BD%93%E8%82%B2%E4%B8%AD%E5%BF%83/homes?refinement_paths%5B%5D=%2Fhomes&current_tab_id=home_tab&selected_tab_id=home_tab&screen_size=large&hide_dates_and_guests_filters=false&place_id=ChIJOYmG5vLzwokRD_jYAxheJas&map_toggle=false&checkin=2022-03-01&checkout=2022-03-03&adults=1']
+
+    def get_proxy(self):
+        proxy = json.loads(requests.get("http://localhost:8899/api/v1/proxies?page=1").text)['proxies']
+        proxy_list = list(proxy)
+        # print(proxy_list)
+        if len(proxy_list) > 0:
+            random_ip_index = random.randint(1, len(proxy_list))
+            ip = proxy_list[random_ip_index]['ip']
+            port = proxy_list[random_ip_index]['port']
+            return ip, port, True
+        else:
+            return 0, 0, False
 
     def __init__(self, **kwargs):
-        self.browser = webdriver.Chrome(executable_path='AirbnbScrapySpider/spiders/chromedriver.exe',
-                                        options=chrome_opt)
-        self.pageNum = 0
+        self.pageNum = 10
+        ip, port, valid = self.get_proxy()
+        if valid:
+            chrome_opt.add_argument("--proxy-server=http://{}:{}".format(ip, port))
+        self.browser = webdriver.Chrome(executable_path='AirbnbScrapySpider/spiders/chromedriver.exe', options=chrome_opt)
         super().__init__()
 
     def start_requests(self):

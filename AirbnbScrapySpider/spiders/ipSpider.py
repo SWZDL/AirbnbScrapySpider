@@ -21,10 +21,12 @@ chrome_opt.add_experimental_option('useAutomationExtension', False)  # 去除正
 chrome_opt.add_argument('lang=zh_CN.UTF-8')
 
 
-class LoginSpider(scrapy.Spider):
-    name = 'loginSpider'
-    allowed_domains = ['airbnb.cn']
-    start_urls = ['https://www.airbnb.cn/login/']
+# chrome_opt.add_experimental_option('debuggerAddress', '127.0.0.1:9222')
+
+class ipSpider(scrapy.Spider):
+    name = 'ipSpider'
+    allowed_domains = ['whatismyip.com']
+    start_urls = ['https://www.whatismyip.com/']
 
     def get_proxy(self):
         proxy = json.loads(requests.get("http://localhost:8899/api/v1/proxies?page=1").text)['proxies']
@@ -38,7 +40,9 @@ class LoginSpider(scrapy.Spider):
         else:
             return 0, 0, False
 
+
     def __init__(self, **kwargs):
+        self.logger.info("login spider start...")
         ip, port, valid = self.get_proxy()
         if valid:
             chrome_opt.add_argument("--proxy-server=http://{}:{}".format(ip, port))
@@ -46,7 +50,10 @@ class LoginSpider(scrapy.Spider):
         super().__init__()
 
     def parse(self, response):
-        pass
+        ip = response.xpath("/html/body/div/div[2]/div/div/div/main/article/div[1]/div[1]/div[1]/div/div/ul/li[1]/a/text()").extract()
+        print("=====================================")
+        print("current ip is {}".format(ip))
+        print("=====================================")
 
     def close(self, response):
         self.browser.quit()
