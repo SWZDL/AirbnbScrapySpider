@@ -48,7 +48,7 @@ class AirbnbscrapyspiderDownloaderMiddleware:
         #  对页面响应体数据的篡改, 如果是每个模块的 url 请求, 则处理完数据并进行封装
         if spider.name == "loginSpider":
             spider.browser.get(request.url)
-            WebDriverWait(spider.browser, 10, 1).until(
+            WebDriverWait(spider.browser, 300, 1).until(
                 EC.presence_of_element_located((By.XPATH, "/html/body/main/div/div[2]/div/div/div[2]/div[2]/label/div/div/div/div"))
             )
             spider.browser.find_element(By.XPATH, "/html/body/main/div/div[2]/div/div/div[2]/div[2]/label/div/div/div/div").click()
@@ -61,7 +61,7 @@ class AirbnbscrapyspiderDownloaderMiddleware:
                 config.airbnb.password)
             spider.browser.find_element(By.XPATH, "/html/body/main/div/div[2]/div/div/div[1]/div/form/div/div[5]/div/div/div[3]/div/button").click()
 
-            WebDriverWait(spider.browser, 30, 1).until(
+            WebDriverWait(spider.browser, 300, 1).until(
                 EC.presence_of_element_located((By.XPATH, "/html/body/div[3]/div/div[1]/div/header/div/div/div[3]/div/div/nav/ul/li[10]/div/div/div/button/div"))
             )
             # 保存登陆完成的 cookies
@@ -71,8 +71,8 @@ class AirbnbscrapyspiderDownloaderMiddleware:
                 f.write(json_cookies)
         elif spider.name == "homesListSpiderGZ":
             spider.browser.get(url=request.url)
-            with open("AirbnbScrapySpider/metro/Guangzhou.txt", encoding="utf8") as f:
-                lines = f.readlines()
+            # with open("AirbnbScrapySpider/metro/Guangzhou.txt", encoding="utf8") as f:
+            #     lines = f.readlines()
             with open('AirbnbScrapySpider/spiders/cookies.json', 'r', encoding='utf8') as f:
                 cookies_list = json.loads(f.read())
             for cookie in cookies_list:
@@ -86,22 +86,23 @@ class AirbnbscrapyspiderDownloaderMiddleware:
                 }
                 spider.browser.add_cookie(cookie_dict)
             # 刷新界面
-            spider.browser.refresh()
-            WebDriverWait(spider.browser, 30, 1).until(
-                EC.presence_of_element_located((By.XPATH, "/html/body/div[3]/div/div[1]/div/header/div/div/div[3]/div/div/nav/ul/li[10]/div/div/div/button/div/div"))
-            )
-            spider.browser.refresh()
+            # spider.browser.refresh()
+            spider.browser.get(url=request.url)
+            # WebDriverWait(spider.browser, 300, 1).until(
+            #     EC.presence_of_element_located((By.XPATH, "/html/body/div[3]/div/div[1]/div/header/div/div/div[3]/div/div/nav/ul/li[10]/div/div/div/button/div/div"))
+            # )
+            # spider.browser.refresh()
 
-            spider.browser.find_element(By.XPATH, "/html/body/div[3]/div/main/div/div[2]/div[1]/div/div/form/div[1]/div[1]/div[2]/div/div/div/div/div/input").send_keys(lines[0].replace("\n", ""))
-            spider.browser.find_element(By.XPATH, "/html/body/div[3]/div/main/div/div[2]/div[1]/div/div/form/div[3]/button").click()
-            WebDriverWait(spider.browser, 30, 1).until(
-                EC.presence_of_element_located((By.XPATH, "/html/body/div[3]/div/main/div/div/div/div[3]/div/div/section/div/div/div/div/div/div[2]"))
-            )
-            spider.browser.find_element(By.XPATH, "/html/body/div[3]/div/main/div/div/div/div[1]/div/div/div[2]/div/div/button").click()  # 关闭地图显示
-            time.sleep(5)
+            # spider.browser.find_element(By.XPATH, "/html/body/div[3]/div/main/div/div[2]/div[1]/div/div/form/div[1]/div[1]/div[2]/div/div/div/div/div/input").send_keys(lines[0].replace("\n", ""))
+            # spider.browser.find_element(By.XPATH, "/html/body/div[3]/div/main/div/div[2]/div[1]/div/div/form/div[3]/button").click()
+            # WebDriverWait(spider.browser, 300, 1).until(
+            #     EC.presence_of_element_located((By.XPATH, "/html/body/div[3]/div/main/div/div/div/div[3]/div/div/section/div/div/div/div/div/div[2]"))
+            # )
+            # spider.browser.find_element(By.XPATH, "/html/body/div[3]/div/main/div/div/div/div[1]/div/div/div[2]/div/div/button").click()  # 关闭地图显示
+            # time.sleep(3)
             element = spider.browser.find_element_by_tag_name('body')
             element.send_keys(Keys.END)
-            time.sleep(20)
+            time.sleep(3)
             row_response = spider.browser.page_source
             return HtmlResponse(url=spider.browser.current_url, body=row_response, encoding="utf8", request=request)
 

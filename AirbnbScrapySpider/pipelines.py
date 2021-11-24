@@ -6,10 +6,10 @@
 # See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 
 
+import pymysql
 # useful for handling different item types with a single interface
 from itemadapter import ItemAdapter
 from scrapy.exceptions import DropItem
-import pymysql
 
 
 class HomesListPipeline(object):
@@ -21,24 +21,31 @@ class HomesListPipeline(object):
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
+        if not adapter.get('ID'):
+            return item
+        try:
+            sql = "SELECT room_id FROM rooms_list WHERE room_id=%s"
+            if self.cursor.execute(sql, adapter.get('ID')) == 1:
+                return item
+        except DropItem:
+            raise DropItem(f"some wrong occurred when select from database")
+
         try:
             # 定义sql语句
-            sql = "INSERT INTO airbnb.rooms_list VALUES (null,%s,%s,%s,%s,%s,%s,%s,%s)"
-
+            sql = "INSERT INTO airbnb.rooms_list (room_id, room_name, room_img, room_price, room_count, room_shape, room_url) VALUES (%s,%s,%s,%s,%s,%s,%s)"
             # 执行sql语句
             self.cursor.execute(sql, (adapter.get('ID'),
                                       adapter.get('name'),
                                       adapter.get('img'),
                                       adapter.get('price'),
-                                      adapter.get('score'),
                                       adapter.get('count'),
                                       adapter.get('shape'),
-                                      adapter.get('number'))
+                                      adapter.get('url')
+                                      )
                                 )
             # 保存修改
             self.connection.commit()
-        except:
-            print("some wrong occurred when insert to database")
+        except DropItem:
             self.connection.rollback()
             print("changes have been rolled back")
             raise DropItem(f"some wrong occurred when insert to database")

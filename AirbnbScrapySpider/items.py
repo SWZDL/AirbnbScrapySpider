@@ -16,13 +16,9 @@ class AirbnbHomeListItem(scrapy.Item):
     img = scrapy.Field()
     # 房源价格
     price = scrapy.Field()
-    # 房源评分
-    score = scrapy.Field()
-    # 折扣
-    count = scrapy.Field()
     # 类型
     shape = scrapy.Field()
-    # 房屋数量
-    number = scrapy.Field()
+    # 房间数量
+    count = scrapy.Field()
     # 房源详情url
     url = scrapy.Field()

@@ -1,6 +1,5 @@
 import scrapy
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 
 from AirbnbScrapySpider.config import Config  # 导入配置文件
 from AirbnbScrapySpider.items import AirbnbHomeListItem
@@ -8,24 +7,25 @@ from AirbnbScrapySpider.items import AirbnbHomeListItem
 '''导入配置'''
 config = Config()
 '''配置 selenium'''
-chrome_opt = Options()  # 创建参数设置对象.
+chrome_opt = webdriver.ChromeOptions()  # 创建参数设置对象.
 # chrome_opt.add_argument('--headless')  # 无界面化.
 # chrome_opt.add_argument('--disable-gpu')  # 配合上面的无界面化.
-chrome_opt.add_argument('--window-size=1900,1000')  # 设置窗口大小, 窗口大小会有影响.
-chrome_opt.add_argument('–disable-infobars')
-chrome_opt.add_argument('–incognito')
-chrome_opt.add_argument('lang=zh_CN.UTF-8')
-custom_headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36 Edg/95.0.1020.44"}
+# chrome_opt.add_argument('--window-size=1900,1000')  # 设置窗口大小, 窗口大小会有影响.
+# chrome_opt.add_argument('–disable-infobars')
+# chrome_opt.add_argument('–incognito')
+# chrome_opt.add_argument('lang=zh_CN.UTF-8')
+chrome_opt.add_experimental_option('debuggerAddress', '127.0.0.1:9222')
 
 
 class HomesListSpider(scrapy.Spider):
     name = 'homesListSpiderGZ'
     allowed_domains = ['airbnb.cn']
-    start_urls = ['https://www.airbnb.cn/']
+    start_urls = ['https://www.airbnb.cn/s/%E5%B9%BF%E5%B7%9E%E4%B8%9C%E7%AB%99/homes?refinement_paths%5B%5D=%2Fhomes&current_tab_id=home_tab&selected_tab_id=home_tab&pets=0&screen_size=large&hide_dates_and_guests_filters=false&place_id=ChIJpfPXL_D-AjQRuCzOwZURknI&map_toggle=false']
 
     def __init__(self, **kwargs):
         self.browser = webdriver.Chrome(executable_path='AirbnbScrapySpider/spiders/chromedriver.exe',
                                         options=chrome_opt)
+        self.pageNum = 0
         super().__init__()
 
     def start_requests(self):
@@ -33,63 +33,46 @@ class HomesListSpider(scrapy.Spider):
         yield response
 
     def custom_parse(self, response, **kwargs):
-        with open("AirbnbScrapySpider/spiders/homes.html", 'wb+') as f:
-            f.write(response.body)
-        home_lists = response.xpath("/html/body/div[3]/div/main/div/div/div/div[3]/div/div/section/div/div/div/div/div/div[2]/div/div/div/div/div")
-        for home in home_lists:
-            item = AirbnbHomeListItem()
-            item["name"] = response.xpath("/html/body/div[3]/div/main/div/div/div/div[3]/div/div/section/div/div/div/div/div/div[2]/div/div/div/div/div[1]/div/div/div/div/div/div/div[2]/a/div[2]/div/div").extract()
-            item["img"] = response.xpath("/html/body/div[3]/div/main/div/div/div/div[3]/div/div/section/div/div/div/div/div/div[2]/div/div/div/div/div/div/div/div/div/div/div/div[1]/div[2]/div/div/div/a/div/img")
-            item["price"] = response.xpath("/html/body/div[3]/div/main/div/div/div/div[3]/div/div/section/div/div/div/div/div/div[2]/div/div/div/div/div/div/div/div/div/div/div/div[2]/div[2]/div/div/div[1]/div/span/span/span/span[1]/span[2]").extract()
-            item["score"] = response.xpath("/html/body/div[3]/div/main/div/div/div/div[3]/div/div/section/div/div/div/div/div/div[2]/div/div/div/div/div/div/div/div/div/div/div/div[2]/div[1]/div/span[2]").extract()
-            item["count"] = response.xpath("/html/body/div[3]/div/main/div/div/div/div[3]/div/div/section/div/div/div/div/div/div[2]/div/div/div/div/div/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div/div[2]/span").extract()
-            item["shape"] = response.xpath("/html/body/div[3]/div/main/div/div/div/div[3]/div/div/section/div/div/div/div/div/div[2]/div/div/div/div/div/div/div/div/div/div/div/div[2]/a/div[1]/div/span/span/text()[1]").extract()
-            item["number"] = response.xpath("/html/body/div[3]/div/main/div/div/div/div[3]/div/div/section/div/div/div/div/div/div[2]/div/div/div/div/div/div/div/div/div/div/div/div[2]/a/div[1]/div/span/span/text()[2]").extract()
-            # item["url"] = "https://www.airbnb.cn" + home.xpath("/div/div/div/div/div/div/div[2]/a/@href").extract_first()
-            # item["ID"] = home.xpath("/div/div/div/div/div/div/div[2]/a/@href").extract_first().split("?")[1].replace("/rooms/", "")
-            print("==========================================ITEM===================================================================================")
-            print(item)
-            print("=============================================================================================================================")
-            yield item
-
-        next_url = "https://www.airbnb.cn/" + response.xpath("/html/body/div[3]/div/main/div/div/div/div[3]/div/div/div/div[1]/nav/div/a[6]/@href").extract_first()
-        print("======================================next_url=======================================================================================")
-        print(next_url)
-        print("=============================================================================================================================")
-        if next_url:
+        for i in range(1, 21):
+            try:
+                item = AirbnbHomeListItem()
+                item['name'] = response.xpath("/html/body/div[3]/div/main/div/div/div/div[3]/div/div/section/div/div/div/div/div/div[2]/div/div/div/div/div[{}]/div/div/div/div/div/div/div[2]/a/div[2]/div/div/text()".format(i))[0].extract()
+                img = response.xpath("/html/body/div[3]/div/main/div/div/div/div[3]/div/div/section/div/div/div/div/div/div[2]/div/div/div/div/div[{}]/div/div/div/div/div/div/div[1]/div[3]/div/div/div/a/div/img/@src".format(i)).extract_first()
+                if not img:
+                    img = response.xpath("/html/body/div[3]/div/main/div/div/div/div[3]/div/div/section/div/div/div/div/div/div[2]/div/div/div/div/div[{}]/div/div/div/div/div/div/div[1]/div[2]/div/div/div/a/div/img/@src".format(i)).extract_first()
+                item['img'] = img
+                item['price'] = response.xpath("/html/body/div[3]/div/main/div/div/div/div[3]/div/div/section/div/div/div/div/div/div[2]/div/div/div/div/div[{}]/div/div/div/div/div/div/div[2]/div[2]/div/div/div/div/span/span/span/span/span[2]/text()".format(i))[0].extract()
+                shape_and_count = response.xpath("/html/body/div[3]/div/main/div/div/div/div[3]/div/div/section/div/div/div/div/div/div[2]/div/div/div/div/div[{}]/div/div/div/div/div/div/div[2]/a/div[1]/div/span/span/text()".format(i)).extract()
+                item['shape'] = list(shape_and_count)[0]
+                item['count'] = list(shape_and_count)[1]
+                item['url'] = 'https://www.airbnb.cn' + response.xpath('/html/body/div[3]/div/main/div/div/div/div[3]/div/div/section/div/div/div/div/div/div[2]/div/div/div/div/div[{}]/div/div/div/div/div/div/div[2]/a/@href'.format(i)).extract_first()
+                item['ID'] = response.xpath("/html/body/div[3]/div/main/div/div/div/div[3]/div/div/section/div/div/div/div/div/div[2]/div/div/div/div/div[{}]/div/div/div/div/div/div/div[2]/a/@href".format(i)).extract_first().split("?")[0].replace("/rooms/", "")
+                # 获取更加详细的房屋信息，如评论等
+                # yield scrapy.Request(url=item['url'], callback=self.parse_detail)
+                yield item  # 将房屋列表存入数据库
+            except:
+                continue
+        self.pageNum += 1
+        # 每个地点只爬 50 页，共 1000 个数据
+        if self.pageNum <= 50:
+            next_url = self.start_urls[0] + "&items_offset=" + str(20 * self.pageNum)
+            # print("======================================================next_url=======================================================================")
+            # print(next_url)
+            # print("======================================================================================================================================")
+            # if next_url:
             response = scrapy.Request(next_url, callback=self.custom_parse, dont_filter=True)
-        yield response
+            yield response
 
-        # 对每一个板块进行详细访问并解析, 获取板块内的每条新闻的url
-        # def parse_detail(self, response):
-        #     div_res = response.xpath("//div[@class='data_row news_article clearfix ']")
-        #     # print(len(div_res))
-        #     title = div_res.xpath(".//div[@class='news_title']/h3/a/text()").extract_first()
-        #     pic_url = div_res.xpath("./a/img/@src").extract_first()
-        #     detail_url = div_res.xpath("//div[@class='news_title']/h3/a/@href").extract_first()
-        #     infos = div_res.xpath(".//div[@class='news_tag//text()']").extract()
-        #     info_list = []
-        #     for info in infos:
-        #         info = info.strip()
-        #         info_list.append(info)
-        #     info_str = "".join(info_list)
-        #     item = WangyiproItem()
-        #
-        #     item["title"] = title
-        #     item["detail_url"] = detail_url
-        #     item["pic_url"] = pic_url
-        #     item["info_str"] = info_str
-        #
-        #     yield scrapy.Request(url=detail_url, callback=self.parse_content,
-        #                          meta={"item": item})  # 通过 参数meta 可以将item参数传递进 callback回调函数,再由 response.meta[...]取出来
+    # 对每一个房屋进行详细访问并解析
+    def parse_detail(self, response):
+        pass
+        # yield scrapy.Request(url=landlord_detail_url, callback=self.parse_landlord_detail, meta={"item": item})  # 通过 参数meta 可以将item参数传递进 callback回调函数,再由 response.meta[...]取出来
 
-        # 对每条新闻的url进行访问, 并解析
-        # def parse_content(self, response):
-        #     item = response.meta["item"]  # 获取从response回调函数由meta传过来的 item 值
-        #     content_list = response.xpath("//div[@class='post_text']/p/text()").extract()
-        #     content = "".join(content_list)
-        #     item["content"] = content
-        #     yield item
+    # 对每个房东的信息进行访问解析
+    def parse_landlord_detail(self, response):
+        pass
+        # item = response.meta["item"]  # 获取从response回调函数由meta传过来的 item 值
+        # yield item
 
     def close(self, response):
         self.browser.quit()
