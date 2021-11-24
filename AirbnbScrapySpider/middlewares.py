@@ -1,28 +1,17 @@
-# Define here the models for your spider middleware
-#
-# See documentation in:
-# https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 import json
-import random
 import time
-# import redis as redis
+
 from scrapy import signals
-import yaml
-import os
-from easydict import EasyDict
-
-# useful for handling different item types with a single interface
-from itemadapter import is_item, ItemAdapter
-from scrapy.downloadermiddlewares.useragent import UserAgentMiddleware
 from scrapy.http import HtmlResponse
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.wait import WebDriverWait
 
-with open(os.path.join('D:\\001-myCode\\PycharmProjects\\AirbnbScrapySpider\\config.yaml')) as f:
-    config = EasyDict(yaml.safe_load(f))
+from AirbnbScrapySpider.config import Config  # 导入配置文件
+
+'''导入配置'''
+config = Config()
 
 
 class AirbnbscrapyspiderDownloaderMiddleware:
@@ -57,9 +46,8 @@ class AirbnbscrapyspiderDownloaderMiddleware:
         # spider: 爬虫文件中对应的爬虫类 homesListSpider_GZ.py 的实例对象, 可以通过这个参数拿到 homes_list 中的一些属性或方法
         """
         #  对页面响应体数据的篡改, 如果是每个模块的 url 请求, 则处理完数据并进行封装
-
         if spider.name == "loginSpider":
-            spider.browser.get(url=request.url)
+            spider.browser.get(request.url)
             WebDriverWait(spider.browser, 10, 1).until(
                 EC.presence_of_element_located((By.XPATH, "/html/body/main/div/div[2]/div/div/div[2]/div[2]/label/div/div/div/div"))
             )
@@ -72,6 +60,7 @@ class AirbnbscrapyspiderDownloaderMiddleware:
             spider.browser.find_element(By.XPATH, "/html/body/main/div/div[2]/div/div/div[1]/div/form/div/div[2]/div[2]/div/div/div/div[2]/input").send_keys(
                 config.airbnb.password)
             spider.browser.find_element(By.XPATH, "/html/body/main/div/div[2]/div/div/div[1]/div/form/div/div[5]/div/div/div[3]/div/button").click()
+
             WebDriverWait(spider.browser, 30, 1).until(
                 EC.presence_of_element_located((By.XPATH, "/html/body/div[3]/div/div[1]/div/header/div/div/div[3]/div/div/nav/ul/li[10]/div/div/div/button/div"))
             )
@@ -80,12 +69,7 @@ class AirbnbscrapyspiderDownloaderMiddleware:
             json_cookies = json.dumps(dict_cookies)  # 转换成字符串保存
             with open('AirbnbScrapySpider/spiders/cookies.json', 'w') as f:
                 f.write(json_cookies)
-            print('cookies保存成功！')
-
         elif spider.name == "homesListSpiderGZ":
-            print("=========================")
-            print("homesListSpiderGZ")
-            print("=========================")
             spider.browser.get(url=request.url)
             with open("AirbnbScrapySpider/metro/Guangzhou.txt", encoding="utf8") as f:
                 lines = f.readlines()
@@ -129,12 +113,14 @@ class AirbnbscrapyspiderDownloaderMiddleware:
         # - return None: continue processing this exception
         # - return a Response object: stops process_exception() chain
         # - return a Request object: stops process_exception() chain
+        return None
+
         # print("添加代理开始")
         # ret_proxy = get_proxy()
         # request.meta["proxy"] = ret_proxy
         # print("为%s添加代理%s" %(request.url,ret_proxy), end="")
         # return None
-        pass
 
     def spider_opened(self, spider):
-        spider.logger.info('Spider opened: %s' % spider.name)
+        # print('Spider opened: %s' % spider.name)
+        pass

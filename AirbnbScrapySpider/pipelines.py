@@ -20,17 +20,28 @@ class HomesListPipeline(object):
         self.cursor = self.connection.cursor()
 
     def process_item(self, item, spider):
+        adapter = ItemAdapter(item)
         try:
             # 定义sql语句
-            sql = "INSERT INTO airbnb.rooms_list (`rooms_list_id`,`room_id`,`room_name`,`room_img`,`room_price`,`room_score`,`room_count`,`room_shape`,`room_number`, VALUES ('',%s,%s,%s,%s,%s,%s,%s,%s)"
+            sql = "INSERT INTO airbnb.rooms_list VALUES (null,%s,%s,%s,%s,%s,%s,%s,%s)"
 
             # 执行sql语句
-            self.cursor.execute(sql, (item['ID'], item['name'], item['img'], item['price'], item['score'], item['count'], item['shape'], item['number']))
+            self.cursor.execute(sql, (adapter.get('ID'),
+                                      adapter.get('name'),
+                                      adapter.get('img'),
+                                      adapter.get('price'),
+                                      adapter.get('score'),
+                                      adapter.get('count'),
+                                      adapter.get('shape'),
+                                      adapter.get('number'))
+                                )
             # 保存修改
             self.connection.commit()
         except:
-            print("something wrong")
+            print("some wrong occurred when insert to database")
             self.connection.rollback()
+            print("changes have been rolled back")
+            raise DropItem(f"some wrong occurred when insert to database")
         return item
 
     def __del__(self):
@@ -38,16 +49,3 @@ class HomesListPipeline(object):
         self.cursor.close()
         # 关闭数据库连接
         self.connection.close()
-
-
-class AirbnbscrapyspiderPipeline:
-    vat_factor = 1.15
-
-    def process_item(self, item, spider):
-        adapter = ItemAdapter(item)
-        if adapter.get('price'):
-            if adapter.get('price_excludes_vat'):
-                adapter['price'] = adapter['price'] * self.vat_factor
-            return item
-        else:
-            raise DropItem(f"Missing price in {item}")

@@ -1,26 +1,21 @@
-import time
-
 import scrapy
-from scrapy import Request
-from selenium.webdriver.chrome.options import Options
-import pymysql as pymysql
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from urllib.parse import urlencode
+from selenium.webdriver.chrome.options import Options
 
+from AirbnbScrapySpider.config import Config  # 导入配置文件
 from AirbnbScrapySpider.items import AirbnbHomeListItem
 
+'''导入配置'''
+config = Config()
+'''配置 selenium'''
 chrome_opt = Options()  # 创建参数设置对象.
-# chrome_opt.add_argument('--headless')   # 无界面化.
-# chrome_opt.add_argument('--disable-gpu')    # 配合上面的无界面化.
+# chrome_opt.add_argument('--headless')  # 无界面化.
+# chrome_opt.add_argument('--disable-gpu')  # 配合上面的无界面化.
 chrome_opt.add_argument('--window-size=1900,1000')  # 设置窗口大小, 窗口大小会有影响.
 chrome_opt.add_argument('–disable-infobars')
 chrome_opt.add_argument('–incognito')
 chrome_opt.add_argument('lang=zh_CN.UTF-8')
-custom_headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36 Edg/95.0.1020.44"}
+custom_headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36 Edg/95.0.1020.44"}
 
 
 class HomesListSpider(scrapy.Spider):

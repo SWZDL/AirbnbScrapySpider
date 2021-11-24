@@ -2,6 +2,7 @@
 AirbnbScrapySpider/spiders/cookies.json
 AirbnbScrapySpider/spiders/homes.html
 config.yaml
+log
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -41,7 +42,7 @@ MANIFEST
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Unit test / coverage reports
+# Unit test.py / coverage reports
 htmlcov/
 .tox/
 .nox/
