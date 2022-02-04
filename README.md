@@ -12,8 +12,6 @@ mysql:
   username:
   password:
   database:
-chrome_options:
-  arguments: [ '--headless', '--disable-gpu','--window-size=1900,1000','–disable-infobars','–incognito','lang=zh_CN.UTF-8' ]
 ```
 
 Then run the login crawler first by running the following command in the project directory.

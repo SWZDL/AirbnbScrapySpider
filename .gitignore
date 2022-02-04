@@ -1,6 +1,9 @@
 .idea
 AirbnbScrapySpider/spiders/cookies.json
 AirbnbScrapySpider/spiders/homes.html
+AirbnbScrapySpider/spiders/chromedriver.exe
+AirbnbScrapySpider/spiders/test.py
+AirbnbScrapySpider/spiders/result.txt
 config.yaml
 log
 # Byte-compiled / optimized / DLL files

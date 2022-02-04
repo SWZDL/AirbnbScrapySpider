@@ -47,6 +47,8 @@ class AirbnbscrapyspiderDownloaderMiddleware:
         # spider: 爬虫文件中对应的爬虫类 homesListSpider_GZ.py 的实例对象, 可以通过这个参数拿到 homes_list 中的一些属性或方法
         """
         #  对页面响应体数据的篡改, 如果是每个模块的 url 请求, 则处理完数据并进行封装
+
+        # 如果是登录获取 cookie 的爬虫
         if spider.name == "loginSpider":
             spider.browser.get(request.url)
             WebDriverWait(spider.browser, 300, 1).until(
@@ -54,7 +56,6 @@ class AirbnbscrapyspiderDownloaderMiddleware:
             )
 
             spider.browser.find_element(By.XPATH, "/html/body/main/div/div[2]/div/div/div[2]/div[2]/label/div/div/div/div").click()
-
             spider.browser.find_element(By.XPATH, "/html/body/main/div/div[2]/div/div/div[1]/div[2]/div/div/div[2]/div/span[1]/button/div/div[2]/div").click()
             spider.browser.find_element(By.XPATH, "/html/body/main/div/div[2]/div/div/div[1]/div/form/div/div[2]/div[1]/div/div/div/div/div/input").send_keys(
                 config.airbnb.phone_number)
@@ -70,13 +71,13 @@ class AirbnbscrapyspiderDownloaderMiddleware:
             json_cookies = json.dumps(dict_cookies)  # 转换成字符串保存
             with open('AirbnbScrapySpider/spiders/cookies.json', 'w') as f:
                 f.write(json_cookies)
-        elif spider.name == "homesListSpiderGZ":
-            # with open("AirbnbScrapySpider/metro/Guangzhou.txt", encoding="utf8") as f:
+
+        # 如果是获取房源的爬虫
+        elif spider.name == "homesListSpider":
             spider.browser.get(url=request.url)
-            #     lines = f.readlines()
+            # 写入 cookie
             with open('AirbnbScrapySpider/spiders/cookies.json', 'r', encoding='utf8') as f:
                 cookies_list = json.loads(f.read())
-            cookie_dict = {}
             for cookie in cookies_list:
                 cookie_dict = {
                     'domain': cookie.get('domain'),
@@ -86,31 +87,22 @@ class AirbnbscrapyspiderDownloaderMiddleware:
                     'httpOnly': cookie.get('httpOnly'),
                     'secure': cookie.get('secure')
                 }
-            spider.browser.add_cookie(cookie_dict)
+                spider.browser.add_cookie(cookie_dict)
             # 刷新界面
-            spider.browser.refresh()
             spider.browser.get(url=request.url)
-            #     EC.presence_of_element_located((By.XPATH, "/html/body/div[3]/div/div[1]/div/header/div/div/div[3]/div/div/nav/ul/li[10]/div/div/div/button/div/div"))
-            # WebDriverWait(spider.browser, 300, 1).until(
-            # )
-            # spider.browser.refresh()
-            # spider.browser.find_element(By.XPATH, "/html/body/div[3]/div/main/div/div[2]/div[1]/div/div/form/div[1]/div[1]/div[2]/div/div/div/div/div/input").send_keys("广州东站".replace("\n", ""))
-            # spider.browser.find_element(By.XPATH, "/html/body/div[3]/div/main/div/div[2]/div[1]/div/div/form/div[3]/button").click()
-            # WebDriverWait(spider.browser, 300, 1).until(
-            #     EC.presence_of_element_located((By.XPATH, "/html/body/div[3]/div/main/div/div/div/div[3]/div/div/section/div/div/div/div/div/div[2]"))
-            # )
             time.sleep(3)
-            # spider.browser.find_element(By.XPATH, "/html/body/div[3]/div/main/div/div/div/div[1]/div/div/div[2]/div/div/button").click()  # 关闭地图显示
-            if spider.browser.current_url == "https://www.airbnb.cn/":
-                spider.browser.get(url=request.url)
             element = spider.browser.find_element_by_tag_name('body')
             element.send_keys(Keys.END)
-            time.sleep(3)
+            time.sleep(10)
             row_response = spider.browser.page_source
             return HtmlResponse(url=spider.browser.current_url, body=row_response, encoding="utf8", request=request)
-        elif spider.name == "ipSpider":
+
+        elif spider.name == "roomDetailSpider":
+            # 或许房屋详情的爬虫
+            spider.browser.get(request.url)
             time.sleep(3)
-            spider.browser.get(url=request.url)
+            element = spider.browser.find_element_by_tag_name('body')
+            element.send_keys(Keys.END)
             row_response = spider.browser.page_source
             return HtmlResponse(url=spider.browser.current_url, body=row_response, encoding="utf8", request=request)
 
@@ -122,7 +114,9 @@ class AirbnbscrapyspiderDownloaderMiddleware:
         # - return None: continue processing this exception
         # - return a Response object: stops process_exception() chain
         # - return a Request object: stops process_exception() chain
+        # spider.browser.quit()
         return None
+
 
     def spider_opened(self, spider):
         # print('Spider opened: %s' % spider.name)
