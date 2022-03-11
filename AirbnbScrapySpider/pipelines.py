@@ -10,16 +10,32 @@ import pymysql
 # useful for handling different item types with a single interface
 from itemadapter import ItemAdapter
 from scrapy.exceptions import DropItem
+from sshtunnel import SSHTunnelForwarder
 
 from AirbnbScrapySpider.items import AirbnbRoomItem
+from AirbnbScrapySpider.config import Config
 
 
 class RoomsPipeline(object):
     def __init__(self):
-        # 建立数据库连接
-        self.connection = pymysql.connect(host='127.0.0.1', port=3306, user='root', password='123456', db='airbnb', charset='utf8')
-        # 创建操作游标
-        self.cursor = self.connection.cursor()
+        config = Config()
+        with SSHTunnelForwarder(
+                (config.server.ip, config.server.port),  # 指定ssh登录的跳转机的address，端口号
+                ssh_username=config.server.username,  # 跳转机的用户名
+                ssh_pkey=config.server.private_key_path,  # 私钥路径
+                ssh_private_key_password=config.server.private_key_password,  # 跳转机的用户密码
+                remote_bind_address=(config.mysql.host, config.mysql.port)) as server:  # mysql服务器的address，端口号
+            # 建立数据库连接
+            self.connection = pymysql.connect(host='127.0.0.1',  # 此处必须是是127.0.0.1
+                                              port=config.mysql.port,
+                                              user=config.mysql.username,  # 数据库用户名
+                                              passwd=config.mysql.password,  # 数据库密码
+                                              db=config.mysql.database  # 数据库名称
+                                              )
+
+            # self.connection = pymysql.connect(host='127.0.0.1', port=3306, user='root', password='123456', db='airbnb', charset='utf8')
+            # 创建操作游标
+            self.cursor = self.connection.cursor()
 
     def process_item(self, item, spider):
         print("是否与目标一致：{}".format(isinstance(item, AirbnbRoomItem)))
