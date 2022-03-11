@@ -23,7 +23,7 @@ class RoomDetailSpider(scrapy.Spider):
         connection = pymysql.connect(host='127.0.0.1', port=3306, user='root', password='wenzengsheng', db='airbnb', charset='utf8')
         # 创建操作游标
         cursor = connection.cursor()
-        sql = "SELECT room_url FROM rooms_list"
+        sql = "SELECT room_url FROM rooms"
         cursor.execute(sql)
         res = cursor.fetchall()
         for url in res:

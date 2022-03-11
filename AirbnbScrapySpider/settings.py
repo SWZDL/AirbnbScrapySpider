@@ -50,8 +50,7 @@ COOKIES_ENABLED = False
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
-    'AirbnbScrapySpider.middlewares.AirbnbscrapyspiderDownloaderMiddleware': 543,
-    # 'AirbnbScrapySpider.middlewares.RandomUserAgent': 542
+    'AirbnbScrapySpider.middlewares.AirbnbScrapySpiderDownloaderMiddleware': 543
 }
 
 # Enable or disable extensions
@@ -63,7 +62,7 @@ DOWNLOADER_MIDDLEWARES = {
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    'AirbnbScrapySpider.pipelines.HomesListPipeline': 300,
+    'AirbnbScrapySpider.pipelines.RoomsPipeline': 300,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)

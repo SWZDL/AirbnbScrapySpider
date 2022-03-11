@@ -17,8 +17,12 @@ class LoginSpider(scrapy.Spider):
         self.browser = config.getDriver()
         super().__init__()
 
+    def start_requests(self):
+        response = scrapy.Request(self.start_urls[0], callback=self.parse, meta={"flag": "login"})
+        yield response
+
     def parse(self, response, **kwargs):
-        pass
+        print(response)
 
     def close(self, response):
         self.browser.quit()

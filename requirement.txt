@@ -8,3 +8,5 @@ beautifulsoup4
 scrapy
 pyyaml
 easydict
+sshtunnel
+mysqlclient
