@@ -67,23 +67,6 @@ class HomesListSpider(scrapy.Spider):
         else:
             self.browser.close()
 
-    # 对每一个房屋进行详细访问并解析
-    def parse_room(self, response):
-        with open('/Users/wenzengsheng/Documents/PyCharmProjects/AirbnbScrapySpider/logs/{}.log'.format(str(time.time())), 'w+') as w:
-            w.write("解析当前房源详细信息\n\n")
-            reviews_count = response.xpath("/html/body/div[3]/div/main/div[2]/div/div/div/div[2]/div/div[1]/div/main/div[4]/div/div/div/section/div[2]/div[1]/div/div/div/div/div/span/text()").extract()
-            if reviews_count:  # 如果有评论就采集，否则跳过
-                w.write("评论数量：{}\n\n".format(reviews_count))
-                price = response.xpath("/html/body/div[3]/div/main/div/div/div/div/div[2]/div/div[2]/div/div/div[1]/div/div/div/div[1]/div/div/div/div/div/div[1]/div[1]/div/span[2]/span/text()").extract()
-                w.write("价格：{}\n\n".format(price))
-                description = response.xpath("/html/body/div[8]/div/div/div/div/div/div/section/div/section/div/div[1]/div[2]")
-                w.write("房屋描述：{}\n\n".format(description))
-                img_list_div = response.xpath('/html/body/div[3]/div/main/div/div/div/div/div[1]/div[1]/div/div/div[1]/div/div[1]')
-                w.write("图片列表：{}\n\n".format(img_list_div))
-                w.write("\n\n\n=========\n\n\n")
-            # yield self.item  # 将房屋信息存入数据库
-            # yield scrapy.Request(url=landlord_detail_url, callback=self.parse_landlord_detail, meta={"item": item})  # 通过 参数meta 可以将item参数传递进 callback回调函数,再由 response.meta[...]取出来
-
     # 对每个房东的信息进行访问解析
     def parse_landlord_detail(self, response):
         pass
