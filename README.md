@@ -2,18 +2,7 @@
 
 ## Steps
 
-Edit the configuration file `config.yaml`.An example is as follows：
-
-```yaml
-airbnb:
-  phone_number: YOUR_PHONE_NUMBER
-  password: LOGIN_PASSWORD
-mysql:
-  username:
-  password:
-  database:
-```
-
+Modify the content of the configuration file named `config_example.yaml` and rename it to `config.yaml`
 Then run the login crawler first by running the following command in the project directory.
 
 ```shell
