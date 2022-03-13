@@ -27,7 +27,7 @@ class RoomsPipeline(object):
                 remote_bind_address=(config.mysql.host, config.mysql.port)) as server:  # mysql服务器的address，端口号
             # 建立数据库连接
             self.connection = pymysql.connect(host='127.0.0.1',  # 此处必须是是127.0.0.1
-                                              port=config.mysql.port,
+                                              port=server.local_bind_port,
                                               user=config.mysql.username,  # 数据库用户名
                                               passwd=config.mysql.password,  # 数据库密码
                                               db=config.mysql.database  # 数据库名称

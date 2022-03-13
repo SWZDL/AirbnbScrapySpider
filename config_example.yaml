@@ -8,7 +8,6 @@ server:
   private_key_path: /PATH/TO/KEY
   private_key_password: CAN_BE_LEFT_BLANK
 mysql:
-  port: 3306
   host: 127.0.0.1
   username: root
   password: 123456

@@ -23,6 +23,7 @@ class LoginSpider(scrapy.Spider):
 
     def parse(self, response, **kwargs):
         print(response)
+        self.browser.quit()
 
     def close(self, response):
         self.browser.quit()
