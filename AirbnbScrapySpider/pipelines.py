@@ -112,7 +112,49 @@ class RoomsPipeline(object):
             return item
         # 如果是房屋详情的 item
         elif isinstance(item, AirbnbRoomDetailItem):
-            pass
+            # 首先要存在这个房屋
+            # 其次这个房屋的详情信息是不完整的（没有 room_price 信息）
+            try:
+                sql_is_exists = "SELECT room_price FROM rooms WHERE room_id=%s"
+                if self.cursor.execute(sql_is_exists, adapter.get('ID')) == 1:
+                    res = [item[0] for item in self.cursor.fetchall()]
+                    if res.pop() is None:
+                        print("数据库存在不完整的记录，可以完善")
+                    else:
+                        # 这里返回意思是，虽然数据库有这个房子，但是它的数据已经完整了
+                        return item
+                else:
+                    # 这里返回意思是，数据库不存在这个房子，自然也不需要完善
+                    return item
+            except DropItem:
+                print("操作数据库出现错误")
+                raise DropItem(f"some wrong occurred when select from database")
+
+            try:
+                # 定义sql语句
+                sql = "INSERT INTO airbnb.rooms (room_name, room_image_list, room_price, room_landlord_id, room_landlord_url, room_reviews_num, room_reviews_tag, room_position, room_description, room_metro, room_rule) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                # 执行sql语句
+                self.cursor.execute(sql, (adapter.get('name'),
+                                          adapter.get('img_list'),
+                                          adapter.get('price'),
+                                          adapter.get('landlord_id'),
+                                          adapter.get('landlord_url'),
+                                          adapter.get('reviews_num'),
+                                          adapter.get('reviews_tag'),
+                                          adapter.get('room_position'),
+                                          adapter.get('description'),
+                                          adapter.get('room_metro'),
+                                          adapter.get('room_rule')
+                                          )
+                                    )
+                # 保存修改
+                self.connection.commit()
+            except DropItem:
+                self.connection.rollback()
+                print("changes have been rolled back")
+                raise DropItem(f"some wrong occurred when insert to database")
+            return item
+
         # 如果是房东详情信息的 item
         elif isinstance(item, AirbnbLandlordDetailItem):
             pass
