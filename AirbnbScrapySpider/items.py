@@ -60,3 +60,14 @@ class AirbnbLandlordDetailItem(scrapy.Item):
     landlord_img = scrapy.Field()
 
 
+class AirbnbRoomReviews(scrapy.Item):
+    # 评论 ID
+    ID = scrapy.Field()
+    # 评论内容
+    review_content = scrapy.Field()
+    # 评论所属房屋 ID
+    review_room_id = scrapy.Field()
+    # 评论时间
+    review_time = scrapy.Field()
+    # 评论者用户名
+    review_user_name = scrapy.Field()
