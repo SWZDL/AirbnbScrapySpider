@@ -4,8 +4,7 @@
 # 将爬取到的项目存储在数据库中
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-
-
+import MySQLdb
 import pymysql
 # useful for handling different item types with a single interface
 from itemadapter import ItemAdapter
@@ -42,7 +41,6 @@ class RoomsPipeline(object):
         adapter = ItemAdapter(item)
         if not adapter.get('ID'):
             return item
-
         # 如果是房屋的 item
         if isinstance(item, AirbnbRoomItem):
             try:
@@ -59,22 +57,10 @@ class RoomsPipeline(object):
                 sql = "INSERT INTO airbnb.rooms (room_id, room_count, room_shape, room_url) VALUES (%s, %s, %s, %s)"
                 # 执行sql语句
                 self.cursor.execute(sql, (str(adapter.get('ID')),
-                                          # adapter.get('name'),
-                                          # adapter.get('img_list'),
-                                          # adapter.get('price'),
                                           adapter.get('count'),
                                           adapter.get('shape'),
                                           adapter.get('url')
-                                          # adapter.get('landlord_id'),
-                                          # adapter.get('landlord_url'),
-                                          # adapter.get('reviews_num'),
-                                          # adapter.get('reviews_tag'),
-                                          # adapter.get('room_position'),
-                                          # adapter.get('description'),
-                                          # adapter.get('room_metro'),
-                                          # adapter.get('room_rule')
-                                          )
-                                    )
+                                          ))
                 # 保存修改
                 self.connection.commit()
             except DropItem:
@@ -85,14 +71,13 @@ class RoomsPipeline(object):
         # 如果是评论的 item
         elif isinstance(item, AirbnbRoomReviews):
             try:
-                sql = "SELECT room_id FROM reviews WHERE review_id=%s"
-                if self.cursor.execute(sql, adapter.get('ID')) == 1:
+                sql = "SELECT review_id FROM reviews WHERE review_room_id={} AND review_time={} AND review_user_name={}".format(adapter.get('review_room_id'), adapter.get('review_time'), adapter.get('review_user_name'))
+                if self.cursor.execute(sql) == 1:
                     print("数据库已有记录")
                     return item
             except DropItem:
                 print("操作数据库出现错误")
                 raise DropItem(f"some wrong occurred when select from database")
-
             try:
                 # 定义sql语句
                 sql = "INSERT INTO airbnb.reviews (review_content, review_room_id, review_time, review_user_name) VALUES (%s, %s, %s, %s)"
@@ -115,38 +100,28 @@ class RoomsPipeline(object):
             # 首先要存在这个房屋
             # 其次这个房屋的详情信息是不完整的（没有 room_price 信息）
             try:
-                sql_is_exists = "SELECT room_price FROM rooms WHERE room_id=%s"
-                if self.cursor.execute(sql_is_exists, adapter.get('ID')) == 1:
+                sql_is_exists = "SELECT room_price FROM rooms WHERE room_id='{}'".format(adapter.get("ID"))
+                execute_res = self.cursor.execute(sql_is_exists)
+                if execute_res:
                     res = [item[0] for item in self.cursor.fetchall()]
+                    print("res:{}".format(str(res)))
                     if res.pop() is None:
                         print("数据库存在不完整的记录，可以完善")
                     else:
-                        # 这里返回意思是，虽然数据库有这个房子，但是它的数据已经完整了
-                        return item
+                        print("数据库有这个房子，但是它的数据已经完整了")
                 else:
-                    # 这里返回意思是，数据库不存在这个房子，自然也不需要完善
-                    return item
+                    print("数据库不存在这个房子，自然也不需要完善")
             except DropItem:
                 print("操作数据库出现错误")
                 raise DropItem(f"some wrong occurred when select from database")
 
             try:
                 # 定义sql语句
-                sql = "INSERT INTO airbnb.rooms (room_name, room_image_list, room_price, room_landlord_id, room_landlord_url, room_reviews_num, room_reviews_tag, room_position, room_description, room_metro, room_rule) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                sql = "INSERT INTO airbnb.rooms (room_name, room_price, room_landlord_id, room_landlord_url, room_reviews_num, room_reviews_tag) VALUES (%s,%s,%s,%s,%s,%s)"
                 # 执行sql语句
-                self.cursor.execute(sql, (adapter.get('name'),
-                                          adapter.get('img_list'),
-                                          adapter.get('price'),
-                                          adapter.get('landlord_id'),
-                                          adapter.get('landlord_url'),
-                                          adapter.get('reviews_num'),
-                                          adapter.get('reviews_tag'),
-                                          adapter.get('room_position'),
-                                          adapter.get('description'),
-                                          adapter.get('room_metro'),
-                                          adapter.get('room_rule')
-                                          )
-                                    )
+                self.cursor.execute(sql, (
+                    adapter.get('name'), adapter.get('price'), adapter.get('landlord_id'), adapter.get('landlord_url'), adapter.get('reviews_num'), str(adapter.get('reviews_tag')).replace("'", "")
+                ))
                 # 保存修改
                 self.connection.commit()
             except DropItem:

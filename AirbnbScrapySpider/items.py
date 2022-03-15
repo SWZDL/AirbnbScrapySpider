@@ -7,7 +7,7 @@ class AirbnbRoomDetailItem(scrapy.Item):
     # 房源名称
     name = scrapy.Field()
     # 房源图片列表
-    img_list = scrapy.Field()
+    # img_list = scrapy.Field()
     # 房源价格
     price = scrapy.Field()
     # 房间数量
@@ -16,7 +16,7 @@ class AirbnbRoomDetailItem(scrapy.Item):
     shape = scrapy.Field()
     # 房源详情url
     url = scrapy.Field()
-    # 房东姓名
+    # 房东 id
     landlord_id = scrapy.Field()
     # 房东详情页面链接
     landlord_url = scrapy.Field()
@@ -25,13 +25,13 @@ class AirbnbRoomDetailItem(scrapy.Item):
     # 评论标签
     reviews_tag = scrapy.Field()
     # 房源位置信息
-    room_position = scrapy.Field()
+    # room_position = scrapy.Field()
     # 房源介绍
-    description = scrapy.Field()
+    # description = scrapy.Field()
     # 房源出行信息
-    room_metro = scrapy.Field()
+    # room_metro = scrapy.Field()
     # 房屋守则
-    room_rule = scrapy.Field()
+    # room_rule = scrapy.Field()
 
 
 class AirbnbRoomItem(scrapy.Item):

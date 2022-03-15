@@ -9,6 +9,8 @@ from sshtunnel import SSHTunnelForwarder
 from AirbnbScrapySpider.config import Config  # 导入配置文件
 
 # 导入配置
+from AirbnbScrapySpider.items import AirbnbRoomDetailItem
+
 config = Config()
 
 
@@ -32,11 +34,9 @@ class RoomDetailSpider(scrapy.Spider):
                                          passwd=config.mysql.password,  # 数据库密码
                                          db=config.mysql.database  # 数据库名称
                                          )
-
-            # self.connection = pymysql.connect(host='127.0.0.1', port=3306, user='root', password='123456', db='airbnb', charset='utf8')
             # 创建操作游标
             cursor = connection.cursor()
-            sql = "SELECT room_url FROM rooms where rooms.room_reviews_num is null limit 100"
+            sql = "SELECT room_url FROM rooms where rooms.room_name is null limit 100 offset 400"
             cursor.execute(sql)
             res = [item[0] for item in cursor.fetchall()]
             return res
@@ -53,23 +53,23 @@ class RoomDetailSpider(scrapy.Spider):
 
     def parse(self, response, **kwargs):
         # parse the detail at here
-        reviews_count = response.xpath("/html/body/div[3]/div/main/div[2]/div/div/div/div[2]/div/div[1]/div/main/div[4]/div/div/div/section/div[2]/div[1]/div/div/div/div/div/span/text()").extract()
+        reviews_num = response.xpath("/html/body/div[3]/div/main/div/div/div/div/div[2]/div/div[1]/div/div[4]/div/div/div/section/div[2]/div[1]/div/div/div/div/div/span/text()").extract_first()
+        print("=================parse room detail============================")
+        print("reviews_num：{}".format(reviews_num))
         print("=============================================")
-        print("reviews_count：{}".format(reviews_count))
-        print("=============================================")
-        if reviews_count:  # 如果有评论就采集，否则跳过
-            price = response.xpath("/html/body/div[3]/div/main/div/div/div/div/div[2]/div/div[2]/div/div/div[1]/div/div/div/div[1]/div/div/div/div/div/div[1]/div[1]/div/span[2]/span/text()").extract()
-            description = response.xpath("/html/body/div[8]/div/div/div/div/div/div/section/div/section/div/div[1]/div[2]")
-            img_list_div = response.xpath('/html/body/div[3]/div/main/div/div/div/div/div[1]/div[1]/div/div/div[1]/div/div[1]')
+        if reviews_num:
+            airbnb_room_detail_item = AirbnbRoomDetailItem()
+            airbnb_room_detail_item['ID'] = response.url.split("?")[0].split('/')[-1]
+            airbnb_room_detail_item['name'] = response.xpath("/html/body/div[3]/div/main/div/div/div/div/div[2]/div/div[1]/div/div[1]/div/div/div/section/div[1]/div[2]/div/h1/div/text()").extract_first()
+            airbnb_room_detail_item['price'] = response.xpath("/html/body/div[3]/div/main/div/div/div/div/div[2]/div/div[2]/div/div/div[1]/div/div/div/div[1]/div/div/div/div/div/div/div[1]/div/span[2]/span/text()").extract_first()
+            airbnb_room_detail_item['landlord_url'] = "https://www.airbnb.cn{}".format(response.xpath("/html/body/div[3]/div/main/div/div/div/div/div[2]/div/div[1]/div/div[9]/div/div/div/section/div[1]/div/div/div[2]/div/div/div/a/@href").extract_first())
+            airbnb_room_detail_item['landlord_id'] = airbnb_room_detail_item['landlord_url'].split("/")[-1]
+            airbnb_room_detail_item['reviews_tag'] = response.xpath("/html/body/div[3]/div/main/div/div/div/div/div[2]/div/div[1]/div/div[4]/div/div/div/section/div[2]/div[4]//span/text()").extract()
+            airbnb_room_detail_item['reviews_num'] = reviews_num
             print("=============================================")
-            print("price:{}\ndescription:{}\nimg_list_div:{}".format(price, description, img_list_div))
+            print("name:{}\nprice:{}\nlandlord_url:{}\nlandlord_id:{}\nreviews_tag:{}\nreviews_num:{}".format(airbnb_room_detail_item['name'], airbnb_room_detail_item['price'], airbnb_room_detail_item['landlord_url'], airbnb_room_detail_item['landlord_id'], airbnb_room_detail_item['reviews_tag'], airbnb_room_detail_item['reviews_num']))
             print("=============================================")
-            # yield self.item  # 将房屋信息存入数据库
-            # yield scrapy.Request(url=landlord_detail_url, callback=self.parse_landlord_detail, meta={"item": item})  # 通过 参数meta 可以将item参数传递进 callback回调函数,再由 response.meta[...]取出来
-        # continue to get the next one
-        # if len(self.url_list) >= 1:
-        #     response = scrapy.Request(self.url_list.pop(), callback=self.parse, meta={"flag": "room_detail"})
-        #     yield response
-        # else:
-        #     self.browser.close()
-        self.browser.close()
+            yield airbnb_room_detail_item  # 将房屋信息存入数据库
+            if len(self.url_list) > 0:
+                response = scrapy.Request(self.url_list.pop(), callback=self.parse, dont_filter=True, meta={"flag": "room_detail"})
+                yield response
