@@ -12,7 +12,7 @@ from itemadapter import ItemAdapter
 from scrapy.exceptions import DropItem
 from sshtunnel import SSHTunnelForwarder
 
-from AirbnbScrapySpider.items import AirbnbRoomItem
+from AirbnbScrapySpider.items import AirbnbRoomItem, AirbnbRoomDetailItem, AirbnbRoomReviews, AirbnbLandlordDetailItem
 from AirbnbScrapySpider.config import Config
 
 
@@ -38,7 +38,7 @@ class RoomsPipeline(object):
             self.cursor = self.connection.cursor()
 
     def process_item(self, item, spider):
-        print("是否与目标一致：{}".format(isinstance(item, AirbnbRoomItem)))
+        # 如果是房屋的 item
         if isinstance(item, AirbnbRoomItem):
             adapter = ItemAdapter(item)
             if not adapter.get('ID'):
@@ -80,6 +80,15 @@ class RoomsPipeline(object):
                 print("changes have been rolled back")
                 raise DropItem(f"some wrong occurred when insert to database")
             return item
+        # 如果是评论的 item
+        elif isinstance(item, AirbnbRoomReviews):
+            pass
+        # 如果是房屋详情的 item
+        elif isinstance(item, AirbnbRoomDetailItem):
+            pass
+        # 如果是房东详情信息的 item
+        elif isinstance(item, AirbnbLandlordDetailItem):
+            pass
 
     def __del__(self):
         # 关闭操作游标
