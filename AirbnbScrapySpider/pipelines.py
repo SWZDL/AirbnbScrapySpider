@@ -38,11 +38,13 @@ class RoomsPipeline(object):
             self.cursor = self.connection.cursor()
 
     def process_item(self, item, spider):
+        # 每种 item 都有 ID 属性，如果不具备这个属性，则此 item 出现了错误，直接返回
+        adapter = ItemAdapter(item)
+        if not adapter.get('ID'):
+            return item
+
         # 如果是房屋的 item
         if isinstance(item, AirbnbRoomItem):
-            adapter = ItemAdapter(item)
-            if not adapter.get('ID'):
-                return item
             try:
                 sql = "SELECT room_id FROM rooms WHERE room_id=%s"
                 if self.cursor.execute(sql, adapter.get('ID')) == 1:
@@ -82,7 +84,32 @@ class RoomsPipeline(object):
             return item
         # 如果是评论的 item
         elif isinstance(item, AirbnbRoomReviews):
-            pass
+            try:
+                sql = "SELECT room_id FROM reviews WHERE review_id=%s"
+                if self.cursor.execute(sql, adapter.get('ID')) == 1:
+                    print("数据库已有记录")
+                    return item
+            except DropItem:
+                print("操作数据库出现错误")
+                raise DropItem(f"some wrong occurred when select from database")
+
+            try:
+                # 定义sql语句
+                sql = "INSERT INTO airbnb.reviews (review_content, review_room_id, review_time, review_user_name) VALUES (%s, %s, %s, %s)"
+                # 执行sql语句
+                self.cursor.execute(sql, (str(adapter.get('review_content')),
+                                          adapter.get('review_room_id'),
+                                          adapter.get('review_time'),
+                                          adapter.get('review_user_name')
+                                          )
+                                    )
+                # 保存修改
+                self.connection.commit()
+            except DropItem:
+                self.connection.rollback()
+                print("changes have been rolled back")
+                raise DropItem(f"some wrong occurred when insert to database")
+            return item
         # 如果是房屋详情的 item
         elif isinstance(item, AirbnbRoomDetailItem):
             pass
