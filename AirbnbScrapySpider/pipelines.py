@@ -154,10 +154,36 @@ class RoomsPipeline(object):
                 print("changes have been rolled back")
                 raise DropItem(f"some wrong occurred when insert to database")
             return item
-
         # 如果是房东详情信息的 item
         elif isinstance(item, AirbnbLandlordDetailItem):
-            pass
+            try:
+                sql = "SELECT room_landlord_id FROM landlords WHERE lanlord_id=%s"
+                if self.cursor.execute(sql, adapter.get('ID')) == 1:
+                    print("数据库已有记录")
+                    return item
+            except DropItem:
+                print("操作数据库出现错误")
+                raise DropItem(f"some wrong occurred when select from database")
+
+            try:
+                # 定义sql语句
+                sql = "INSERT INTO landlords (lanlord_id, room_landlord_name, room_landlord_self_description, room_landlord_country, room_landlord_language, room_landlord_img) VALUES (%s, %s, %s, %s, %s)"
+                # 执行sql语句
+                self.cursor.execute(sql, (str(adapter.get('ID')),
+                                          adapter.get('name'),
+                                          adapter.get('description'),
+                                          adapter.get('landlord_country'),
+                                          adapter.get('landlord_language'),
+                                          adapter.get('landlord_img')
+                                          )
+                                    )
+                # 保存修改
+                self.connection.commit()
+            except DropItem:
+                self.connection.rollback()
+                print("changes have been rolled back")
+                raise DropItem(f"some wrong occurred when insert to database")
+            return item
 
     def __del__(self):
         # 关闭操作游标
